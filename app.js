@@ -22,9 +22,9 @@ let selectedTransactionData = [];
 
 /*********** DATABASE CONNECTION ************/
 
-mongoose.connect("mongodb://localhost:27017/budgetingWebsiteUsersDB")
-    .then(() => console.log("Connected to Budgeting Website DB"))
-    .catch(() => console.log("Connection to Budgeting Website DB failed"));
+mongoose.connect("mongodb://localhost:27017/researchSecureAuthDB")
+    .then(() => console.log("Connected to research secure auth DB"))
+    .catch(() => console.log("Connection to research secure auth DB failed"));
 
 /*********** DATABASE SCHEMA SET-UP ************/
 
@@ -33,14 +33,6 @@ const userSchema = new mongoose.Schema({
 
   email: String,
   password: String,
-
-  transactions: [{
-    item: String,
-    cost: String,
-    retailer: String,
-    date: Date,
-    category: String
-  }]
 
 });
 
@@ -80,51 +72,9 @@ app.get("/mainmenu", (_, res) => {
 
 })
 
-app.get("/configureExpenditureView", (_, res) => {
-
-  if (authenticated) {
-
-    res.sendFile(__dirname + "/client/configure-expenditure-view/configure-expenditure-view.html");
-
-  } else {
-
-    res.redirect("/signin");
-
-  }
-
-})
-
-app.get("/logExpenditure", (_, res) => {
-
-  if (authenticated) {
-
-    res.sendFile(__dirname + "/client/log-expenditure/log-expenditure.html");
-
-  } else {
-
-    res.redirect("/signin");
-
-  }
-
-})
-
 app.get("/logout", (_, res) => {
   authenticated = false;
   res.redirect("/");
-})
-
-app.get("/getChartData", (_, res) => {
-
-  if (authenticated) {
-
-    res.send(selectedTransactionData);
-
-  } else {
-
-    res.redirect("/signin");
-
-  }
-
 })
 
 /*********** API POST ENDPOINTS ************/
@@ -202,7 +152,6 @@ app.post("/signup", (req, res) => {
           const newUser = new User({
             email: userEmail,
             password: hashedPassword,
-            transactions: []
           });
 
           newUser.save()
@@ -223,129 +172,6 @@ app.post("/signup", (req, res) => {
     }
 
   });
-
-})
-
-app.post("/viewExpenditure", (req, res) => {
-
-  let transactionLog = [];
-
-  const month = req.body.month;
-  const year = parseInt(req.body.year);
-  const budget = req.body.budget;
-
-  const monthNameToIndex = {
-    "January": 0,
-    "February": 1,
-    "March": 2,
-    "April": 3,
-    "May": 4,
-    "June": 5,
-    "July": 6,
-    "August": 7,
-    "September": 8,
-    "October": 9,
-    "November": 10,
-    "December": 11,
-  }
-
-  if (currentUserEmail === null) {
-
-    authenticated = false;
-    res.redirect("/signin");
-
-  } else {
-
-    User.findOne({email: currentUserEmail}, (err, returnedUser) => {
-
-      if (returnedUser) {
-
-        for (let i = 0; i < returnedUser.transactions.length; i++) {
-
-          if ((returnedUser.transactions[i].date.getFullYear() === year) && (returnedUser.transactions[i].date.getMonth()) === monthNameToIndex[month]) {
-            transactionLog.push(returnedUser.transactions[i]);
-          }
-
-        }
-
-        // Ensures all transactions are sorted by date
-        // Logic of the sort function --> If left operand is greater than right operand, swap.
-        // If equal or lesser than, do nothing.
-        transactionLog.sort((a, b) => {
-          return new Date(a.date) - new Date(b.date)
-        })
-
-        selectedTransactionData = transactionLog;
-
-        let totalExpenditure = 0.0;
-
-        for (let i = 0; i < selectedTransactionData.length; i++) {
-          totalExpenditure += parseFloat(selectedTransactionData[i].cost);
-        }
-
-        let percentageOfBudgetSpent = (totalExpenditure/parseFloat(budget)) * 100;
-
-        res.render("expenditure", {
-          entries: transactionLog,
-          percentageBudgetSpent: percentageOfBudgetSpent.toFixed(2),
-          selectedMonth: month,
-          selectedYear: year
-        });
-
-      } else {
-
-        console.log(err);
-        res.redirect("/configureExpenditureView");
-
-      }
-
-    })
-
-  }
-
-})
-
-app.post("/logExpenditure", (req, res) => {
-
-  const loggedItem = req.body.item;
-  const loggedCost = req.body.cost;
-  const loggedRetailer = req.body.retailer;
-  const loggedDate = req.body.theDate;
-  const loggedCategory = req.body.category;
-
-  const unformattedDateString = loggedDate.split(/\D/);
-  const formattedDateObj = new Date(unformattedDateString[0], --unformattedDateString[1], unformattedDateString[2]);
-
-  if (currentUserEmail === null) {
-
-    authenticated = false;
-    res.redirect("/signin");
-
-  } else {
-
-    const newTransaction = {
-      item: loggedItem,
-      cost: loggedCost,
-      retailer: loggedRetailer,
-      date: formattedDateObj,
-      category: loggedCategory
-    };
-
-    User.findOneAndUpdate({email: currentUserEmail}, { $push: { transactions: newTransaction }}, (err, _) => {
-
-      if (err) {
-
-        res.redirect("/logExpenditure");
-
-      } else {
-
-        res.redirect("/mainmenu");
-
-      }
-
-    })
-
-  }
 
 })
 

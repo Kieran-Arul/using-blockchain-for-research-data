@@ -1,6 +1,6 @@
 ## Project Overview
 
-- This website helps users to track their budget and manage their expenditure in a convenient, intuitive way.
+- This website helps academics and test subjects share research data in a secure way by interfacing with the Ethereum blockchain
 
 ## How to Use
 
@@ -37,11 +37,11 @@ First, ensure you have xcode command line tools installed
 
 9\. Clone the repository to your local machine
 
-	git clone https://github.com/Kieran-Arul/budgeting-website
+	git clone https://github.com/Kieran-Arul/final-year-project
 
 10\. Navigate into the project directory
 
-	cd budgeting-website
+	cd final-year-project
 
 11\. Run the following command to install the necessary dependencies
 
