@@ -1,13 +1,13 @@
 {
-  "name": "budgeting-website",
+  "name": "final-year-project",
   "version": "1.0.0",
-  "description": "Website to track expenditure and help budgeting",
+  "description": "Web App to allow academics and test subjects to securely handle research data",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "author": "JSS, LC, VS, KA",
+  "author": "Kieran Arul",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
