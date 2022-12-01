@@ -201,7 +201,9 @@ app.post("/signup", (req, res) => {
 
 app.post("/submitResearchQuestions", (req, res) => {
 
-  console.log(req.body);
+  Object.keys(req.body).forEach(key => {
+    console.log(key + " --> " + req.body[key]);
+  })
   res.redirect("/mainmenu");
 
 })
