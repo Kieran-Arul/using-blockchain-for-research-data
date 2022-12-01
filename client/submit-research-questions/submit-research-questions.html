@@ -1,0 +1,51 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ResearchSecure | Submit Questions</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+
+  <!-- Custom CSS -->
+  <link href="submit-research-questions/submit-research-questions.css" rel="stylesheet">
+</head>
+
+<body class="text-center">
+
+<main>
+
+  <form id="questionForm" action="/submitResearchQuestions" method="POST" onsubmit="return formIsValid()">
+
+    <h1 id="question-number">Question 1:</h1>
+
+    <!-- One "tab" for each step in the form: -->
+    <div class="tab">
+      <p><input placeholder="Enter Question..." name="question1"></p>
+    </div>
+
+    <div>
+      <button class="btn btn-lg btn-danger" type="button" id="prevBtn" onclick="incrementQuestion(-1)">Previous Question</button>
+      <button class="btn btn-lg btn-primary" type="button" id="nextBtn" onclick="incrementQuestion(1)">Next Question</button>
+      <button class="btn btn-lg btn-success" type="submit" id="submitBtn">Submit All Questions</button>
+    </div>
+
+  </form>
+
+</main>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+
+<!-- jQuery JS -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- Custom JS -->
+<script src="submit-research-questions/submit-research-questions.js"></script>
+
+</body>
+
+</html>

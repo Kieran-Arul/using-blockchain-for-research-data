@@ -18,13 +18,13 @@ app.use(express.urlencoded({
 
 let authenticated = false;
 let currentUserEmail = null;
-let selectedTransactionData = [];
+let currentUserOccupation = null;
 
 /*********** DATABASE CONNECTION ************/
 
-mongoose.connect("mongodb://localhost:27017/researchSecureAuthDB")
-    .then(() => console.log("Connected to research secure auth DB"))
-    .catch(() => console.log("Connection to research secure auth DB failed"));
+mongoose.connect("mongodb://localhost:27017/researchSecureDB")
+    .then(() => console.log("Connected to research secure DB"))
+    .catch(() => console.log("Connection to research secure DB failed"));
 
 /*********** DATABASE SCHEMA SET-UP ************/
 
@@ -33,6 +33,12 @@ const userSchema = new mongoose.Schema({
 
   email: String,
   password: String,
+  occupation: String,
+
+  researchData: [{
+    title: String,
+    data: [String]
+  }]
 
 });
 
@@ -63,6 +69,20 @@ app.get("/mainmenu", (_, res) => {
   if (authenticated) {
 
     res.sendFile(__dirname + "/client/main-menu/main-menu.html")
+
+  } else {
+
+    res.redirect("/signin");
+
+  }
+
+})
+
+app.get("/submitResearchQuestions", (_, res) => {
+
+  if (authenticated) {
+
+    res.sendFile(__dirname + "/client/submit-research-questions/submit-research-questions.html")
 
   } else {
 
@@ -126,6 +146,7 @@ app.post("/signup", (req, res) => {
 
   const userEmail = req.body.email;
   const userPassword = req.body.password;
+  const userOccupation = req.body.occupation;
 
   User.findOne({email: userEmail}, (err, returnedUser) => {
 
@@ -148,16 +169,19 @@ app.post("/signup", (req, res) => {
 
         bcrypt.hash(userPassword, saltRounds, (err, hashedPassword) => {
 
-          // transactions: [] is added by default as defined in the schema above
+          // researchData: [] is added by default as defined in the schema above
           const newUser = new User({
             email: userEmail,
             password: hashedPassword,
+            occupation: userOccupation,
+            researchData: []
           });
 
           newUser.save()
               .then(() => {
                 authenticated = true;
                 currentUserEmail = userEmail;
+                currentUserOccupation = userOccupation;
                 res.redirect("/mainmenu");
               })
               .catch(err => {
@@ -172,6 +196,13 @@ app.post("/signup", (req, res) => {
     }
 
   });
+
+})
+
+app.post("/submitResearchQuestions", (req, res) => {
+
+  console.log(req.body);
+  res.redirect("/mainmenu");
 
 })
 
