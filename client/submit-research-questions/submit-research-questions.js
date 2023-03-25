@@ -49,7 +49,7 @@ function incrementQuestion(n) {
         newParaElement.appendChild(newInputElement);
         newDivElement.appendChild(newParaElement);
 
-        formElement.insertBefore(newDivElement, formElement.children[formElement.children.length - 1]);
+        formElement.insertBefore(newDivElement, formElement.children[formElement.children.length - 2]);
 
     }
 
@@ -88,3 +88,43 @@ function formIsValid() {
 
     return isValid;
 }
+
+let previewBtn = document.getElementById("previewBtn");
+
+previewBtn.addEventListener("click", () => {
+
+    let responseTable = document.getElementById("previewResponseTable");
+
+    responseTable.replaceChildren();
+
+    let inputBoxes = document.getElementsByTagName("input");
+
+    let tableHeaderRow = document.createElement("tr");
+    let tableHeader1 = document.createElement("th");
+    let tableHeader2 = document.createElement("th");
+
+    tableHeader1.textContent = "Questions";
+    tableHeader2.textContent = "Responses";
+
+    tableHeaderRow.appendChild(tableHeader1);
+    tableHeaderRow.appendChild(tableHeader2);
+
+    responseTable.appendChild(tableHeaderRow);
+
+    for (let i = 0; i < inputBoxes.length; i++) {
+
+        let tableRow = document.createElement("tr");
+        let questionNum = document.createElement("td");
+        let questionData = document.createElement("td");
+
+        questionNum.textContent = "Question " + (i + 1);
+        questionData.textContent = inputBoxes[i].value;
+
+        tableRow.appendChild(questionNum);
+        tableRow.appendChild(questionData);
+
+        responseTable.appendChild(tableRow);
+
+    }
+
+})

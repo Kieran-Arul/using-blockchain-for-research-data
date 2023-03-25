@@ -30,7 +30,28 @@
     <div class="buttonDiv">
       <button class="btn btn-lg btn-danger" type="button" id="prevBtn" onclick="incrementQuestion(-1)">Previous Question</button>
       <button class="btn btn-lg btn-primary" type="button" id="nextBtn" onclick="incrementQuestion(1)">Next Question</button>
-      <button class="btn btn-lg btn-success" type="submit" id="submitBtn">Submit All Questions</button>
+      <button class="btn btn-lg btn-success" data-bs-toggle="modal" data-bs-target="#previewResponses" type="button" id="previewBtn">Preview Answers</button>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="previewResponses" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+      <div class="modal-dialog modal-fullscreen-xxl-down">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="staticBackdropLabel">Preview Answers</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+
+            <table id="previewResponseTable"></table>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Edit Responses</button>
+            <button type="submit" class="btn btn-success">Submit</button>
+          </div>
+        </div>
+      </div>
     </div>
 
   </form>

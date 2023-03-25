@@ -17,6 +17,8 @@ app.use(express.urlencoded({
 }));
 
 let authenticated = false;
+
+// Cache current user's email and occupation for easy future look-up
 let currentUserEmail = null;
 let currentUserOccupation = null;
 
@@ -29,22 +31,30 @@ mongoose.connect("mongodb://localhost:27017/researchSecureDB")
 /*********** DATABASE SCHEMA SET-UP ************/
 
 // Defines a schema that will be used for a collection (table) in the database
+// User table
 const userSchema = new mongoose.Schema({
 
   email: String,
   password: String,
   occupation: String,
+  fullName: String,
+  addedResearchers: [String]
 
-  researchData: [{
-    title: String,
-    data: [String]
-  }]
+});
+
+// Research data table
+const researchDataSchema = new mongoose.Schema({
+
+  researcherEmail: String,
+  title: String,
+  data: [String]
 
 });
 
 // Creates a MongoDB collection (equivalent to table) called "Users" (Mongo automatically changes User to 
 // Users). Documents in this particular collection will follow the schema of "userSchema" defined above
 const User = new mongoose.model("User", userSchema);
+const ResearchData = new mongoose.model("ResearchData", researchDataSchema);
 
 /*********** API GET ENDPOINTS ************/
 
@@ -68,7 +78,9 @@ app.get("/mainmenu", (_, res) => {
 
   if (authenticated) {
 
-    res.sendFile(__dirname + "/client/main-menu/main-menu.html")
+    res.render("main-menu", {
+      occupation: currentUserOccupation
+    })
 
   } else {
 
@@ -80,10 +92,17 @@ app.get("/mainmenu", (_, res) => {
 
 app.get("/submitResearchQuestions", (_, res) => {
 
-  if (authenticated) {
+  // Only let the user proceed if they are authenticated and are a researcher
+  if (authenticated && currentUserOccupation === "Researcher") {
 
     res.sendFile(__dirname + "/client/submit-research-questions/submit-research-questions.html")
 
+    // Redirect to the main menu if they are authenticated but not a researcher
+  } else if (authenticated) {
+
+    res.redirect("/mainmenu");
+
+    // If they are not authenticated, force the user to sign in
   } else {
 
     res.redirect("/signin");
@@ -92,8 +111,23 @@ app.get("/submitResearchQuestions", (_, res) => {
 
 })
 
+app.get("/selectResearcher", (req, res) => {
+
+  User.distinct('fullName', (err, names) => {
+
+    if (err || !names) {
+      res.redirect("/mainmenu");
+    }
+
+    
+
+  })
+
+})
+
 app.get("/logout", (_, res) => {
   authenticated = false;
+  currentUserOccupation = null;
   res.redirect("/");
 })
 
@@ -122,6 +156,7 @@ app.post("/signin", (req, res) => {
 
           authenticated = true;
           currentUserEmail = returnedUser.email;
+          currentUserOccupation = returnedUser.occupation;
           res.redirect("/mainmenu");
 
         } else {
@@ -144,6 +179,7 @@ app.post("/signin", (req, res) => {
 
 app.post("/signup", (req, res) => {
 
+  const userFullName = req.body.fullName;
   const userEmail = req.body.email;
   const userPassword = req.body.password;
   const userOccupation = req.body.occupation;
@@ -169,12 +205,11 @@ app.post("/signup", (req, res) => {
 
         bcrypt.hash(userPassword, saltRounds, (err, hashedPassword) => {
 
-          // researchData: [] is added by default as defined in the schema above
           const newUser = new User({
             email: userEmail,
             password: hashedPassword,
             occupation: userOccupation,
-            researchData: []
+            fullName: userFullName
           });
 
           newUser.save()
@@ -201,10 +236,38 @@ app.post("/signup", (req, res) => {
 
 app.post("/submitResearchQuestions", (req, res) => {
 
+  let hasSubmissionError = false;
+
   Object.keys(req.body).forEach(key => {
-    console.log(key + " --> " + req.body[key]);
+
+    const newResearch = new ResearchData({
+      researcherEmail: currentUserEmail,
+      title: req.body[key],
+      data: []
+    })
+
+    newResearch.save()
+        .then(() => {
+          console.log("Successfully saved research question");
+        })
+        .catch(err => {
+          console.log(err);
+          hasSubmissionError = true;
+        })
+
   })
+
+  if (hasSubmissionError) {
+    res.redirect("/submitResearchQuestions");
+  }
+
   res.redirect("/mainmenu");
+
+})
+
+app.post("/viewResearchQuestions", (req, res) => {
+
+
 
 })
 

@@ -31,3 +31,26 @@ input.invalid {
 .btn {
     margin-right: 1%;
 }
+
+#previewResponseTable {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#previewResponseTable td, #previewResponseTable th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+#previewResponseTable tr:nth-child(even){background-color: #f2f2f2;}
+
+#previewResponseTable tr:hover {background-color: #ddd;}
+
+#previewResponseTable th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #04AA6D;
+    color: white;
+}

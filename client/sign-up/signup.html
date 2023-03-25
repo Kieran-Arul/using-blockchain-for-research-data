@@ -21,11 +21,12 @@
         <form action="/signup" method="post">
 
             <h1 class="h3 mb-3 fw-normal">Sign-Up</h1>
-            <input type="text" name="email" class="form-control top" placeholder="Email" id="emailId" required autofocus><span id="emailValidId"></span>
+            <input type="text" name="fullName" class="form-control top" placeholder="Full Name" id="fullNameId" required autofocus>
+            <input type="text" name="email" class="form-control middle" placeholder="Email" id="emailId" required autofocus><span id="emailValidId"></span>
             <input type="password" name="password" class="form-control middle" placeholder="Password" id="passwordId" required>
-            <input type="password" name="confirmPassword" id="confirmPasswordId" class="form-control bottom" placeholder="Confirm Password" required><span id="passwordMatchId"></span>
+            <input type="password" name="confirmPassword" id="confirmPasswordId" class="form-control middle" placeholder="Confirm Password" required><span id="passwordMatchId"></span>
 
-            <div class="form-group">
+            <div class="form-group bottom">
                 <select class="form-control" name="occupation">
                     <option selected disabled>Choose Occupation...</option>
                     <option>Researcher</option>
