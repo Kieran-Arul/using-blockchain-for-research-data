@@ -90,6 +90,35 @@ app.get("/mainmenu", (_, res) => {
 
 })
 
+app.get("/addTestSubject", (req, res) => {
+
+  if (authenticated) {
+
+    User.find({ occupation: "Test Subject" }, (err, testers) => {
+
+      if (err) {
+
+        console.log(err)
+        res.redirect("/mainmenu")
+
+      } else {
+
+        res.render("addTestSubject", {
+          participants: testers
+        })
+
+      }
+
+    })
+
+  } else {
+
+    res.redirect("/signin");
+
+  }
+
+})
+
 app.get("/submitResearchQuestions", (_, res) => {
 
   // Only let the user proceed if they are authenticated and are a researcher
@@ -260,6 +289,16 @@ app.post("/submitResearchQuestions", (req, res) => {
   if (hasSubmissionError) {
     res.redirect("/submitResearchQuestions");
   }
+
+  res.redirect("/mainmenu");
+
+})
+
+app.post("/addTestSubject", (req, res) => {
+
+  const testers = req.body.participants;
+
+  console.log(testers);
 
   res.redirect("/mainmenu");
 
