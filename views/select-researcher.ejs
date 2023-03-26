@@ -18,15 +18,15 @@
 
 <main class="form-select-researcher">
 
-    <form action="/viewResearchQuestions" method="post">
+    <form action="/viewResearchQuestions" method="POST">
 
         <h1 class="h3 mb-3 fw-normal">Select Researcher</h1>
 
         <div class="form-group">
             <select class="form-control" name="selectedResearcher">
-                <option selected disabled>Choose Occupation...</option>
+                <option selected disabled>Choose Researcher...</option>
 
-                <% researchers.forEach(researcher => { %>
+                <% researcherList.forEach(researcher => { %>
 
                     <option><%=researcher%></option>
 

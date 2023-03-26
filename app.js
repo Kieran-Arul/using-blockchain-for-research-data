@@ -38,7 +38,7 @@ const userSchema = new mongoose.Schema({
   password: String,
   occupation: String,
   fullName: String,
-  addedResearchers: [String]
+  researchers: [String]
 
 });
 
@@ -140,17 +140,27 @@ app.get("/submitResearchQuestions", (_, res) => {
 
 })
 
-app.get("/selectResearcher", (req, res) => {
+app.get("/selectResearcher", async (req, res) => {
 
-  User.distinct('fullName', (err, names) => {
+  if (authenticated) {
 
-    if (err || !names) {
+    try {
+
+      const currUser = await User.findOne({email: currentUserEmail});
+
+      res.render("select-researcher", {
+        researcherList: currUser.researchers
+      })
+
+    } catch (e) {
       res.redirect("/mainmenu");
     }
 
-    
+  } else {
 
-  })
+    res.redirect("/signin");
+
+  }
 
 })
 
@@ -213,7 +223,7 @@ app.post("/signup", (req, res) => {
   const userPassword = req.body.password;
   const userOccupation = req.body.occupation;
 
-  User.findOne({email: userEmail}, (err, returnedUser) => {
+  User.findOne({ $or: [ { email: userEmail }, { fullName: userFullName } ] }, (err, returnedUser) => {
 
     // Email already exists
     if (returnedUser) {
@@ -294,17 +304,58 @@ app.post("/submitResearchQuestions", (req, res) => {
 
 })
 
-app.post("/addTestSubject", (req, res) => {
+app.post("/addTestSubject", async (req, res) => {
 
   const testers = req.body.participants;
 
-  console.log(testers);
+  try {
 
-  res.redirect("/mainmenu");
+    const currUser = await User.findOne({email: currentUserEmail})
+
+    for (let i = 0; i < testers.length; i++) {
+
+      await User.findOneAndUpdate({fullName: testers[i]}, { $push: { researchers: currUser.fullName }})
+
+    }
+
+    res.redirect("/mainmenu");
+
+  } catch (e) {
+    console.log(e)
+    res.redirect("/addTestSubject")
+  }
 
 })
 
-app.post("/viewResearchQuestions", (req, res) => {
+app.post("/viewResearchQuestions", async (req, res) => {
+
+  const researcherName = req.body.selectedResearcher;
+
+  try {
+
+    const researcher = await User.findOne({fullName: researcherName})
+    const questions = await ResearchData.find({researcherEmail: researcher.email})
+
+    let questionTitles = []
+
+    for (let i = 0; i < questions.length; i++) {
+
+      questionTitles.push(questions[i].title);
+
+    }
+
+    res.render("viewResearchQuestions", {
+      questionsData: questionTitles
+    })
+
+  } catch (e) {
+    console.log(e)
+    res.redirect("/selectResearcher")
+  }
+
+})
+
+app.post("/submitResearchAnswers", (req, res) => {
 
 
 

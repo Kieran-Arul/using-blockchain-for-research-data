@@ -26,14 +26,12 @@
 
       <tr><th style="text-align: center;">Participant</th></tr>
 
-      <% let counter = 1 %>
       <% participants.forEach(participant => { %>
         <tr>
            <td>
             <label><input type="checkbox" name="participants" value="<%=participant.fullName%>"><%=participant.fullName%></label>
            </td>
         </tr>
-        <% counter++ %>
       <% }) %>
 
     </table>
