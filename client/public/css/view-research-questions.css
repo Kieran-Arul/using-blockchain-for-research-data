@@ -1,5 +1,4 @@
-/* Style the form */
-#regForm {
+#questionForm {
     background-color: #ffffff;
     margin: 100px auto;
     padding: 40px;
@@ -7,12 +6,15 @@
     min-width: 300px;
 }
 
+.question-title {
+    margin-bottom: 5%;
+}
+
 /* Style the input fields */
 input {
     padding: 10px;
     width: 100%;
     font-size: 17px;
-    font-family: Raleway;
     border: 1px solid #aaaaaa;
 }
 
@@ -26,29 +28,33 @@ input.invalid {
     display: none;
 }
 
-button {
+.btn {
+    margin-right: 1%;
+}
+
+#previewResponseTable {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#previewResponseTable td, #previewResponseTable th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+#previewResponseTable tr:nth-child(even){background-color: #f2f2f2;}
+
+#previewResponseTable tr:hover {background-color: #ddd;}
+
+#previewResponseTable th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
     background-color: #04AA6D;
-    color: #ffffff;
-    border: none;
-    padding: 10px 20px;
-    font-size: 17px;
-    font-family: Raleway;
-    cursor: pointer;
+    color: white;
 }
 
-button:hover {
-    opacity: 0.8;
-}
-
-#prevBtn {
-    background-color: #bbbbbb;
-}
-
-.question-title {
-    margin-bottom: 5%;
-}
-
-/* Make circles that indicate the steps of the form: */
 .step {
     height: 15px;
     width: 15px;

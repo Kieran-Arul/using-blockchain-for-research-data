@@ -1,64 +1,71 @@
-let currentTab = 0;
-showTab(currentTab);
+let currentQuestionIdx = 0;
+showQuestion(currentQuestionIdx);
 
-function showTab(n) {
-    // This function will display the specified tab of the form ...
-    const x = document.getElementsByClassName("tab");
-    x[n].style.display = "block";
-    // ... and fix the Previous/Next buttons:
-    if (n === 0) {
+function showQuestion(questionIdx) {
+
+    let questions = document.getElementsByClassName("tab");
+
+    questions[questionIdx].style.display = "block";
+
+    if (questionIdx === 0) {
         document.getElementById("prevBtn").style.display = "none";
     } else {
         document.getElementById("prevBtn").style.display = "inline";
     }
-    if (n === (x.length - 1)) {
-        document.getElementById("nextBtn").innerHTML = "Submit";
+
+    if (questionIdx === questions.length - 1) {
+        document.getElementById("nextBtn").style.display = "none";
     } else {
-        document.getElementById("nextBtn").innerHTML = "Next";
+        document.getElementById("nextBtn").style.display = "inline";
     }
-    // ... and run a function that displays the correct step indicator:
-    fixStepIndicator(n)
+
+    fixStepIndicator(questionIdx)
+
 }
 
-function nextPrev(n) {
-    // This function will figure out which tab to display
-    const x = document.getElementsByClassName("tab");
-    // Exit the function if any field in the current tab is invalid:
-    if (n === 1 && !validateForm()) return false;
-    // Hide the current tab:
-    x[currentTab].style.display = "none";
-    // Increase or decrease the current tab by 1:
-    currentTab = currentTab + n;
-    // if you have reached the end of the form... :
-    if (currentTab >= x.length) {
-        //...the form gets submitted:
-        document.getElementById("regForm").submit();
-        return false;
+function incrementQuestion(n) {
+
+    let questions = document.getElementsByClassName("tab");
+
+    // Return so that the form does not go to the next page
+    if (n === 1 && !formIsValid()){
+        return;
     }
-    // Otherwise, display the correct tab:
-    showTab(currentTab);
+
+    // Stops displaying the current question:
+    questions[currentQuestionIdx].style.display = "none";
+
+    // Increment or decrement the current tab by 1:
+    currentQuestionIdx += n;
+
+    // Display the tab at that index:
+    showQuestion(currentQuestionIdx);
 }
 
-function validateForm() {
-    // This function deals with validation of the form fields
-    let x, y, i, valid = true;
-    x = document.getElementsByClassName("tab");
-    y = x[currentTab].getElementsByTagName("input");
+function formIsValid() {
+
+    let isValid = true;
+    let questions = document.getElementsByClassName("tab");
+    let inputBoxesOfCurrentQuestion = questions[currentQuestionIdx].getElementsByTagName("input");
+
     // A loop that checks every input field in the current tab:
-    for (i = 0; i < y.length; i++) {
+    for (let i = 0; i < inputBoxesOfCurrentQuestion.length; i++) {
+
         // If a field is empty...
-        if (y[i].value === "") {
-            // add an "invalid" class to the field:
-            y[i].className += " invalid";
-            // and set the current valid status to false:
-            valid = false;
+        if (inputBoxesOfCurrentQuestion[i].value === "") {
+
+            inputBoxesOfCurrentQuestion[i].className = "invalid";
+            isValid = false;
+
+        } else {
+
+            inputBoxesOfCurrentQuestion[i].className = "";
+
         }
+
     }
-    // If the valid status is true, mark the step as finished and valid:
-    if (valid) {
-        document.getElementsByClassName("step")[currentTab].className += " finish";
-    }
-    return valid; // return the valid status
+
+    return isValid;
 }
 
 function fixStepIndicator(n) {
@@ -70,3 +77,43 @@ function fixStepIndicator(n) {
     //... and adds the "active" class to the current step:
     x[n].className += " active";
 }
+
+let previewBtn = document.getElementById("previewBtn");
+
+previewBtn.addEventListener("click", () => {
+
+    let responseTable = document.getElementById("previewResponseTable");
+
+    responseTable.replaceChildren();
+
+    let inputBoxes = document.getElementsByTagName("input");
+
+    let tableHeaderRow = document.createElement("tr");
+    let tableHeader1 = document.createElement("th");
+    let tableHeader2 = document.createElement("th");
+
+    tableHeader1.textContent = "Questions";
+    tableHeader2.textContent = "Responses";
+
+    tableHeaderRow.appendChild(tableHeader1);
+    tableHeaderRow.appendChild(tableHeader2);
+
+    responseTable.appendChild(tableHeaderRow);
+
+    for (let i = 0; i < inputBoxes.length; i++) {
+
+        let tableRow = document.createElement("tr");
+        let questionNum = document.createElement("td");
+        let questionData = document.createElement("td");
+
+        questionNum.textContent = "Question " + (i + 1);
+        questionData.textContent = inputBoxes[i].value;
+
+        tableRow.appendChild(questionNum);
+        tableRow.appendChild(questionData);
+
+        responseTable.appendChild(tableRow);
+
+    }
+
+})

@@ -352,9 +352,15 @@ app.post("/addTestSubject", async (req, res) => {
 
     const currentUser = await User.findOne({email: currentUserEmail})
 
-    for (let i = 0; i < testers.length; i++) {
+    if (Array.isArray(testers)) {
 
-      await User.findOneAndUpdate({email: testers[i]}, { $push: { researchers: currentUser}})
+      for (let i = 0; i < testers.length; i++) {
+        await User.findOneAndUpdate({email: testers[i]}, { $push: { researchers: currentUser}})
+      }
+
+    } else {
+
+      await User.findOneAndUpdate({email: testers}, { $push: { researchers: currentUser}})
 
     }
 
