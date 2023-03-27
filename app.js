@@ -38,7 +38,10 @@ const userSchema = new mongoose.Schema({
   password: String,
   occupation: String,
   fullName: String,
-  researchers: [String]
+  researchers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  }]
 
 });
 
@@ -47,7 +50,7 @@ const researchDataSchema = new mongoose.Schema({
 
   researcherEmail: String,
   title: String,
-  data: [String]
+  responses: [String]
 
 });
 
@@ -103,7 +106,7 @@ app.get("/addTestSubject", (req, res) => {
 
       } else {
 
-        res.render("addTestSubject", {
+        res.render("add-test-subject", {
           participants: testers
         })
 
@@ -146,10 +149,10 @@ app.get("/selectResearcher", async (req, res) => {
 
     try {
 
-      const currUser = await User.findOne({email: currentUserEmail});
+      const currentUser = await User.findOne({email: currentUserEmail}).populate("researchers");
 
       res.render("select-researcher", {
-        researcherList: currUser.researchers
+        researcherList: currentUser.researchers
       })
 
     } catch (e) {
@@ -169,6 +172,43 @@ app.get("/logout", (_, res) => {
   currentUserOccupation = null;
   res.redirect("/");
 })
+
+app.get("/selectQuestion", async (req, res) => {
+
+  try {
+
+    const questions = await ResearchData.find({researcherEmail: currentUserEmail})
+
+    res.render("select-question", {
+      questionList: questions
+    })
+
+  } catch (e) {
+    console.log(e)
+    res.redirect("/mainmenu")
+  }
+
+})
+
+app.post("/selectQuestion", async (req, res) => {
+
+  const questionId = req.body.selectedQuestion;
+
+  try {
+
+    const questionDoc = await ResearchData.findById(questionId);
+
+    res.render("view-question-responses", {
+      questionDocument: questionDoc
+    })
+
+  } catch (e) {
+    console.log(e)
+    res.redirect("/selectQuestion")
+  }
+
+})
+
 
 /*********** API POST ENDPOINTS ************/
 
@@ -282,7 +322,7 @@ app.post("/submitResearchQuestions", (req, res) => {
     const newResearch = new ResearchData({
       researcherEmail: currentUserEmail,
       title: req.body[key],
-      data: []
+      responses: []
     })
 
     newResearch.save()
@@ -310,11 +350,11 @@ app.post("/addTestSubject", async (req, res) => {
 
   try {
 
-    const currUser = await User.findOne({email: currentUserEmail})
+    const currentUser = await User.findOne({email: currentUserEmail})
 
     for (let i = 0; i < testers.length; i++) {
 
-      await User.findOneAndUpdate({fullName: testers[i]}, { $push: { researchers: currUser.fullName }})
+      await User.findOneAndUpdate({email: testers[i]}, { $push: { researchers: currentUser}})
 
     }
 
@@ -329,23 +369,14 @@ app.post("/addTestSubject", async (req, res) => {
 
 app.post("/viewResearchQuestions", async (req, res) => {
 
-  const researcherName = req.body.selectedResearcher;
+  const researcherEmail = req.body.selectedResearcher;
 
   try {
 
-    const researcher = await User.findOne({fullName: researcherName})
-    const questions = await ResearchData.find({researcherEmail: researcher.email})
+    const questions = await ResearchData.find({researcherEmail: researcherEmail})
 
-    let questionTitles = []
-
-    for (let i = 0; i < questions.length; i++) {
-
-      questionTitles.push(questions[i].title);
-
-    }
-
-    res.render("viewResearchQuestions", {
-      questionsData: questionTitles
+    res.render("view-research-questions", {
+      questionsData: questions
     })
 
   } catch (e) {
@@ -355,9 +386,28 @@ app.post("/viewResearchQuestions", async (req, res) => {
 
 })
 
-app.post("/submitResearchAnswers", (req, res) => {
+app.post("/submitResearchAnswers", async (req, res) => {
 
+  const questionIds = Object.keys(req.body);
 
+  try {
+
+    for (let i = 0; i < questionIds.length; i++) {
+
+      const testerResponse = req.body[questionIds[i]]
+
+      await ResearchData.findByIdAndUpdate(questionIds[i], { $push: { responses: testerResponse } })
+
+    }
+
+    res.redirect("/mainmenu");
+
+  } catch (e) {
+
+    console.log(e)
+    res.redirect("/selectResearcher");
+
+  }
 
 })
 

@@ -1,0 +1,36 @@
+body {
+    background-color: #E8ECEF;
+}
+
+.page-header {
+    margin-top: 4%;
+    margin-bottom: 3%;
+}
+
+#responses {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#responses td, #responses th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+#responses tr:nth-child(even){background-color: #f2f2f2;}
+
+#responses tr:hover {background-color: #ddd;}
+
+#responses th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: center;
+    background-color: #04AA6D;
+    color: white;
+}
+
+.back-btn {
+    margin-top: 3%;
+    margin-bottom: 2%;
+}

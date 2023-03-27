@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <title>ResearchSecure | View Responses</title>
+
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+
+	<!-- BOOTSTRAP CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+
+	<!-- CUSTOM CSS -->
+  <link rel="stylesheet" href="public/css/view-question-responses.css">
+</head>
+
+<body>
+
+	<div class="jumbotron text-center">
+
+		<div class="container">
+
+			<h2 class="display-3 page-header">Responses to:<br><%=questionDocument.title%></h2>
+
+			<table id="responses">
+
+				<tr>
+				    <th>Response ID</th>
+					<th>Response</th>
+				</tr>
+
+                <% let counter = 1 %>
+				<% questionDocument.responses.forEach(response => { %>
+				<tr>
+					<td><%=counter%></td>
+					<td><%=response%></td>
+				</tr>
+				<% counter++ %>
+				<% }) %>
+
+			</table>
+
+			<a class="btn btn-dark btn-lg back-btn" href="/selectQuestion" role="button">Back</a>
+            <p>© Copyright 2022 Kieran Arul</p>
+
+		</div>
+
+	</div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+
+    <!-- jQuery JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+	<script src="public/js/view-question-responses.js"></script>
+
+</body>
+
+</html>
