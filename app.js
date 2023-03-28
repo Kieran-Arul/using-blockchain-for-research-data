@@ -1,5 +1,7 @@
 /*********** GENERAL SET-UP ************/
 
+const crypto = require("crypto");
+
 const express = require("express");
 const app = express();
 
@@ -16,8 +18,7 @@ app.use(express.urlencoded({
   extended: true
 }));
 
-let authenticated = false;
-let currentUserEmail = null;
+let currentUser = null;
 
 /*********** DATABASE CONNECTION ************/
 
@@ -76,25 +77,10 @@ app.get("/signup", (_, res) => {
 
 app.get("/mainmenu", (_, res) => {
 
-  if (authenticated) {
+  if (currentUser) {
 
-    User.findOne({email: currentUserEmail}, (err, returnedUser) => {
-
-      if (err) {
-
-        res.render("failure", {
-          message: "Something went wrong. Please try and sign in again",
-          route: "/signin"
-        })
-
-      } else if (returnedUser) {
-
-        res.render("main-menu", {
-          occupation: returnedUser.occupation
-        })
-
-      }
-
+    res.render("main-menu", {
+      occupation: currentUser.occupation
     })
 
   } else {
@@ -110,7 +96,7 @@ app.get("/mainmenu", (_, res) => {
 
 app.get("/addTestSubject", (req, res) => {
 
-  if (authenticated) {
+  if ((currentUser) && (currentUser.occupation === "Researcher")) {
 
     User.find({ occupation: "Test Subject" }, (err, testers) => {
 
@@ -132,7 +118,7 @@ app.get("/addTestSubject", (req, res) => {
   } else {
 
     res.render("failure", {
-      message: "This page is blocked as you are not yet authenticated. Please sign in first.",
+      message: "This page is blocked as you are not yet authenticated or not a researcher.",
       route: "/signin"
     })
 
@@ -142,40 +128,14 @@ app.get("/addTestSubject", (req, res) => {
 
 app.get("/submitResearchQuestions", (_, res) => {
 
-  if (authenticated) {
+  if ((currentUser) && (currentUser.occupation === "Researcher")) {
 
-    User.findOne({email: currentUserEmail}, (err, returnedUser) => {
-
-      if (err) {
-
-        res.render("failure", {
-          message: "Something went wrong. Please try again",
-          route: "/mainmenu"
-        })
-
-      } else if (returnedUser) {
-
-        if (returnedUser.occupation === "Researcher") {
-
-          res.sendFile(__dirname + "/client/submit-research-questions/submit-research-questions.html")
-
-        } else {
-
-          res.render("failure", {
-            message: "This page is blocked as you are not a researcher.",
-            route: "/mainmenu"
-          })
-
-        }
-
-      }
-
-    })
+    res.sendFile(__dirname + "/client/submit-research-questions/submit-research-questions.html")
 
   } else {
 
     res.render("failure", {
-      message: "This page is blocked as you are not yet authenticated. Please sign in first.",
+      message: "This page is blocked as you are not authenticated or not a researcher.",
       route: "/signin"
     })
 
@@ -185,27 +145,29 @@ app.get("/submitResearchQuestions", (_, res) => {
 
 app.get("/selectResearcher", async (req, res) => {
 
-  if (authenticated) {
+  if ((currentUser) && (currentUser.occupation === "Test Subject")) {
 
     try {
 
-      const currentUser = await User.findOne({email: currentUserEmail}).populate("researchers");
+      const userWPopulatedResearchers = await currentUser.populate("researchers")
 
       res.render("select-researcher", {
-        researcherList: currentUser.researchers
+        researcherList: userWPopulatedResearchers.researchers
       })
 
     } catch (e) {
+
       res.render("failure", {
         message: "Something went wrong.",
         route: "/mainmenu"
       })
+
     }
 
   } else {
 
     res.render("failure", {
-      message: "This page is blocked as you are not yet authenticated. Please sign in first.",
+      message: "This page is blocked as you are not yet authenticated or not a test subject.",
       route: "/signin"
     })
 
@@ -214,7 +176,8 @@ app.get("/selectResearcher", async (req, res) => {
 })
 
 app.get("/logout", (_, res) => {
-  authenticated = false;
+
+  currentUser = null;
 
   res.render("success", {
     message: "You have logged out of your account.",
@@ -225,25 +188,31 @@ app.get("/logout", (_, res) => {
 
 app.get("/selectQuestion", async (req, res) => {
 
-  if (authenticated) {
+  if ((currentUser) && (currentUser.occupation === "Researcher")) {
 
     try {
 
-      const questions = await ResearchData.find({researcherEmail: currentUserEmail})
+      const questions = await ResearchData.find({researcherEmail: currentUser.email})
 
       res.render("select-question", {
         questionList: questions
       })
 
     } catch (e) {
-      console.log(e)
-      res.redirect("/mainmenu")
+
+      console.log(e);
+
+      res.render("failure", {
+        message: "Something went wrong.",
+        route: "/mainmenu"
+      })
+
     }
 
   } else {
 
     res.render("failure", {
-      message: "This page is blocked as you are not yet authenticated. Please sign in first.",
+      message: "This page is blocked as you are not yet authenticated or not a researcher.",
       route: "/signin"
     })
 
@@ -253,20 +222,44 @@ app.get("/selectQuestion", async (req, res) => {
 
 app.get("/hashData", (req, res) => {
 
-  if (authenticated) {
+  if ((currentUser) && (currentUser.occupation === "Researcher")) {
 
+    ResearchData.find({researcherEmail: currentUser.email}, (err, data) => {
 
+      if (err) {
+
+        console.log(err);
+        res.render("failure", {
+          message: "Something went wrong. Please try again.",
+          route: "/mainmenu"
+        })
+
+      } else if (data) {
+
+        const hash = crypto.createHash("sha256").update(JSON.stringify(data)).digest("hex");
+
+        res.render("success", {
+          message: "Your research data has been hashed. The hash is: " + hash,
+          route: "/mainmenu"
+        })
+
+      }
+
+    })
 
   } else {
 
     res.render("failure", {
-      message: "This page is blocked as you are not yet authenticated. Please sign in first.",
+      message: "This page is blocked as you are not yet authenticated or not a researcher.",
       route: "/signin"
     })
 
   }
 
 })
+
+
+/*********** API POST ENDPOINTS ************/
 
 app.post("/selectQuestion", async (req, res) => {
 
@@ -281,14 +274,17 @@ app.post("/selectQuestion", async (req, res) => {
     })
 
   } catch (e) {
+
     console.log(e)
-    res.redirect("/selectQuestion")
+
+    res.render("failure", {
+      message: "Something went wrong. Please try again.",
+      route: "/selectQuestion"
+    })
+
   }
 
 })
-
-
-/*********** API POST ENDPOINTS ************/
 
 app.post("/signin", (req, res) => {
 
@@ -311,22 +307,25 @@ app.post("/signin", (req, res) => {
 
         if (isCorrect === true) {
 
-          authenticated = true;
-          currentUserEmail = returnedUser.email;
+          currentUser = returnedUser;
           res.redirect("/mainmenu");
 
         } else {
 
-          res.redirect("/signin");
+          res.render("failure", {
+            message: "Something went wrong.",
+            route: "/signin"
+          })
 
         }
 
       })
 
-    }
-
-    else {
-      res.redirect("/signin");
+    } else {
+      res.render("failure", {
+        message: "Incorrect email or password.",
+        route: "/signin"
+      })
     }
 
   })
@@ -335,12 +334,12 @@ app.post("/signin", (req, res) => {
 
 app.post("/signup", (req, res) => {
 
-  const userFullName = req.body.fullName;
   const userEmail = req.body.email;
   const userPassword = req.body.password;
+  const userFullName = req.body.fullName;
   const userOccupation = req.body.occupation;
 
-  User.findOne({ email: currentUserEmail }, (err, returnedUser) => {
+  User.findOne({ email: userEmail }, (err, returnedUser) => {
 
     // Email already exists
     if (returnedUser) {
@@ -371,24 +370,53 @@ app.post("/signup", (req, res) => {
             email: userEmail,
             password: hashedPassword,
             occupation: userOccupation,
-            fullName: userFullName
+            fullName: userFullName,
+            researchers: []
           });
 
           newUser.save()
               .then(() => {
-                authenticated = true;
-                currentUserEmail = userEmail;
-                res.render("success", {
-                  message: "Account successfully created.",
-                  route: "/mainmenu"
+
+                User.findOne({ email: userEmail}, (err, currUser) => {
+
+                  if (err) {
+
+                    res.render("failure", {
+                      message: "Something went wrong. Please try again.",
+                      route: "/signin"
+                    })
+
+                  } else if (currUser) {
+
+                    currentUser = currUser;
+
+                    res.render("success", {
+                      message: "Account successfully created.",
+                      route: "/mainmenu"
+                    })
+
+                  } else {
+
+                    res.render("failure", {
+                      message: "Sign up failed. Please try again.",
+                      route: "/signup"
+                    })
+
+                  }
+
                 })
+
+
               })
               .catch(err => {
+
                 console.log(err);
+
                 res.render("failure", {
-                  message: "Something went wrong. Please try again.",
+                  message: "Sign up failed. Please try again.",
                   route: "/signup"
                 })
+
               });
 
         })
@@ -403,12 +431,10 @@ app.post("/signup", (req, res) => {
 
 app.post("/submitResearchQuestions", (req, res) => {
 
-  let hasSubmissionError = false;
-
   Object.keys(req.body).forEach(key => {
 
     const newResearch = new ResearchData({
-      researcherEmail: currentUserEmail,
+      researcherEmail: currentUser.email,
       title: req.body[key],
       responses: []
     })
@@ -418,18 +444,17 @@ app.post("/submitResearchQuestions", (req, res) => {
           console.log("Successfully saved research question");
         })
         .catch(err => {
+
           console.log(err);
-          hasSubmissionError = true;
+
+          res.render("failure", {
+            message: "Error submitting questions. Please try again.",
+            route: "/submitResearchQuestions"
+          })
+
         })
 
   })
-
-  if (hasSubmissionError) {
-    res.render("failure", {
-      message: "Error submitting questions. Please try again.",
-      route: "/submitResearchQuestions"
-    })
-  }
 
   res.render("success", {
     message: "Research questions submitted.",
@@ -443,8 +468,6 @@ app.post("/addTestSubject", async (req, res) => {
   const testers = req.body.participants;
 
   try {
-
-    const currentUser = await User.findOne({email: currentUserEmail})
 
     if (Array.isArray(testers)) {
 
