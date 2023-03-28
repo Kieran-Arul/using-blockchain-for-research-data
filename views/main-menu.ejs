@@ -92,28 +92,36 @@
                 <div class="row">
 
                     <% if (occupation === "Researcher") { %>
-                        <div class="col-lg-4 rule-box">
+
+                        <div class="col-lg-3 rule-box">
                             <a href="/submitResearchQuestions"><i class="fas fa-briefcase fa-4x icon"></i></a>
                             <h3 class="rule-title">Submit Research Questions</h3>
                         </div>
 
-                        <div class="col-lg-4 rule-box">
+                        <div class="col-lg-3 rule-box">
                             <a href="/selectQuestion"><i class="fas fa-book fa-4x icon"></i></a>
                             <h3 class="rule-title">View Question Responses</h3>
                         </div>
 
-                        <div class="col-lg-4 rule-box">
+                        <div class="col-lg-3 rule-box">
+                            <a href="/hashData"><i class="fas fa-hashtag fa-4x icon"></i></a>
+                            <h3 class="rule-title">Hash Data</h3>
+                        </div>
+
+                        <div class="col-lg-3 rule-box">
                             <a href="/addTestSubject"><i class="fas fa-taxi fa-4x icon"></i></a>
                             <h3 class="rule-title">Add Research Participant</h3>
                         </div>
 
                     <% } else if (occupation === "Test Subject") { %>
+
                         <div class="col-lg-12 rule-box">
                             <a href="/selectResearcher"><i class="fas fa-briefcase fa-4x icon"></i></a>
                             <h3 class="rule-title">Answer Research Questions</h3>
                         </div>
 
                     <% } else if (occupation === "Peer Reviewer") { %>
+
                         <div class="col-lg-12 rule-box ">
                             <a href="/verifyDataIntegrity"><i class="fas fa-hands-helping fa-4x icon"></i></a>
                             <h3 class="rule-title">Verify Data Integrity</h3>
