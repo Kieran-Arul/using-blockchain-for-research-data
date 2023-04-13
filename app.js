@@ -230,17 +230,18 @@ app.get("/selectQuestion", async (req, res) => {
 
 })
 
-app.get("/downloadData", (req, res) => {
+app.get("/confirmDownload", (req, res) => {
 
   if ((currentUser) && (currentUser.occupation === "Researcher")) {
 
     if (currentUser.allResponded) {
 
-      ResearchData.find({researcherEmail: currentUser.email}, (err, data) => {
+      ResearchData.find({ researcherEmail: currentUser.email }, (err, data) => {
 
         if (err) {
 
           console.log(err);
+
           res.render("failure", {
             message: "Something went wrong. Please try again.",
             route: "/mainmenu"
@@ -250,49 +251,11 @@ app.get("/downloadData", (req, res) => {
 
           const dataAsJson = JSON.stringify(data);
 
-          fs.writeFile("output.json", dataAsJson, err => {
+          const hash = crypto.createHash("sha256").update(dataAsJson).digest("hex");
 
-            if (err) {
-              res.render("failure", {
-                message: "Something went wrong when trying to download the file.",
-                route: "/mainmenu"
-              })
-            }
-
-            console.log("File created");
-
-            const filePath = path.join(__dirname, "output.json");
-            const fileStream = fs.createReadStream(filePath);
-
-            res.setHeader('Content-Type', 'application/json');
-            res.setHeader('Content-Disposition', 'attachment; filename=output.json');
-
-            fileStream.pipe(res);
-
-            res.on("finish", () => {
-
-              const hash = crypto.createHash("sha256").update(dataAsJson).digest("hex");
-
-              fs.unlink(filePath, err => {
-
-                if (err) {
-                  res.render("failure", {
-                    message: "Something went wrong when deleting the file on the server-side.",
-                    route: "/mainmenu"
-                  })
-                }
-
-                console.log("File deleted")
-
-                res.render("success", {
-                  message: "Your research data has been hashed. The hash is: " + hash + ". Please submit this to the blockchain. Do not close the page.",
-                  route: "/writeToBlockchain"
-                })
-
-              })
-
-            });
-
+          res.render("success", {
+            message: "Your research data has been hashed. The hash is: " + hash + ". Click proceed to download your data and write your hash to the blockchain.",
+            route: "/downloadData"
           })
 
         }
@@ -319,11 +282,84 @@ app.get("/downloadData", (req, res) => {
 
 })
 
-app.get("/writeToBlockchain", (req, res) => {
+async function writeToBlockchain(hash) {
+
+}
+
+app.get("/downloadData", (req, res) => {
 
   if ((currentUser) && (currentUser.occupation === "Researcher")) {
 
+    if (currentUser.allResponded) {
 
+      ResearchData.find({researcherEmail: currentUser.email}, (err, data) => {
+
+        if (err) {
+
+          console.log(err);
+
+          res.render("failure", {
+            message: "Something went wrong. Please try again.",
+            route: "/mainmenu"
+          })
+
+        } else if (data) {
+
+          const dataAsJson = JSON.stringify(data);
+
+          const hash = crypto.createHash("sha256").update(dataAsJson).digest("hex");
+
+          writeToBlockchain(hash)
+              .then(r => console.log("Written to blockchain"))
+              .catch(e => console.log("Writing to blockchain failed"))
+
+          fs.writeFile("output.json", dataAsJson, err => {
+
+            if (err) {
+              res.render("failure", {
+                message: "Something went wrong when trying to download the file.",
+                route: "/mainmenu"
+              })
+            }
+
+            console.log("File created");
+
+            const filePath = path.join(__dirname, "output.json");
+            const fileStream = fs.createReadStream(filePath);
+
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Content-Disposition', 'attachment; filename=output.json');
+
+            fileStream.pipe(res);
+
+            res.on("finish", () => {
+
+              fs.unlink(filePath, err => {
+
+                if (err) {
+                  console.log(err)
+                }
+
+                console.log("File deleted")
+
+              })
+
+            });
+
+          })
+
+        }
+
+      })
+
+    } else {
+
+      res.render("failure", {
+        message: "You cannot download the data yet as not all your participants have responded.",
+        route: "/mainmenu"
+      })
+
+    }
 
   } else {
 
@@ -547,19 +583,28 @@ app.post("/addTestSubject", async (req, res) => {
 
   const testers = req.body.participants;
 
+  await User.findOneAndUpdate({email: currentUser.email}, { allResponded: false })
+
   try {
 
     if (Array.isArray(testers)) {
 
       for (let i = 0; i < testers.length; i++) {
+
         await User.findOneAndUpdate({email: testers[i]}, { $addToSet: { researchers: currentUser}})
-        await User.findOneAndUpdate({email: currentUser.email}, { $addToSet: { testSubjects: testers[i]}})
+
+        let currentParticipant = await User.findOne({email: testers[i]})
+
+        await User.findOneAndUpdate({email: currentUser.email}, { $addToSet: { testSubjects: currentParticipant}})
       }
 
     } else {
 
       await User.findOneAndUpdate({email: testers}, { $addToSet: { researchers: currentUser}})
-      await User.findOneAndUpdate({email: currentUser.email}, { $addToSet: { testSubjects: testers}})
+
+      let currentParticipant = await User.findOne({email: testers})
+
+      await User.findOneAndUpdate({email: currentUser.email}, { $addToSet: { testSubjects: currentParticipant}})
 
     }
 
@@ -605,7 +650,9 @@ app.post("/submitResearchAnswers", async (req, res) => {
 
     let firstQuestion = await ResearchData.findById(questionIds[0]);
     const questionnaireOwnerEmail = firstQuestion.researcherEmail;
-    const numTestSubjects = await User.findOne({email: questionnaireOwnerEmail}).testSubjects.length;
+    const questionnaireOwner = await User.findOne({email: questionnaireOwnerEmail});
+    const numTestSubjects = questionnaireOwner.testSubjects.length;
+    console.log(numTestSubjects);
 
     for (let i = 0; i < questionIds.length; i++) {
 
