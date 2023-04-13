@@ -1,6 +1,8 @@
 /*********** GENERAL SET-UP ************/
 
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 
 const express = require("express");
 const app = express();
@@ -39,7 +41,15 @@ const userSchema = new mongoose.Schema({
   researchers: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
-  }]
+  }],
+  testSubjects: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  }],
+  allResponded: {
+    type: Boolean,
+    default: false
+  }
 
 });
 
@@ -220,32 +230,100 @@ app.get("/selectQuestion", async (req, res) => {
 
 })
 
-app.get("/hashData", (req, res) => {
+app.get("/downloadData", (req, res) => {
 
   if ((currentUser) && (currentUser.occupation === "Researcher")) {
 
-    ResearchData.find({researcherEmail: currentUser.email}, (err, data) => {
+    if (currentUser.allResponded) {
 
-      if (err) {
+      ResearchData.find({researcherEmail: currentUser.email}, (err, data) => {
 
-        console.log(err);
-        res.render("failure", {
-          message: "Something went wrong. Please try again.",
-          route: "/mainmenu"
-        })
+        if (err) {
 
-      } else if (data) {
+          console.log(err);
+          res.render("failure", {
+            message: "Something went wrong. Please try again.",
+            route: "/mainmenu"
+          })
 
-        const hash = crypto.createHash("sha256").update(JSON.stringify(data)).digest("hex");
+        } else if (data) {
 
-        res.render("success", {
-          message: "Your research data has been hashed. The hash is: " + hash,
-          route: "/mainmenu"
-        })
+          const dataAsJson = JSON.stringify(data);
 
-      }
+          fs.writeFile("output.json", dataAsJson, err => {
 
+            if (err) {
+              res.render("failure", {
+                message: "Something went wrong when trying to download the file.",
+                route: "/mainmenu"
+              })
+            }
+
+            console.log("File created");
+
+            const filePath = path.join(__dirname, "output.json");
+            const fileStream = fs.createReadStream(filePath);
+
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Content-Disposition', 'attachment; filename=output.json');
+
+            fileStream.pipe(res);
+
+            res.on("finish", () => {
+
+              const hash = crypto.createHash("sha256").update(dataAsJson).digest("hex");
+
+              fs.unlink(filePath, err => {
+
+                if (err) {
+                  res.render("failure", {
+                    message: "Something went wrong when deleting the file on the server-side.",
+                    route: "/mainmenu"
+                  })
+                }
+
+                console.log("File deleted")
+
+                res.render("success", {
+                  message: "Your research data has been hashed. The hash is: " + hash + ". Please submit this to the blockchain. Do not close the page.",
+                  route: "/writeToBlockchain"
+                })
+
+              })
+
+            });
+
+          })
+
+        }
+
+      })
+
+    } else {
+
+      res.render("failure", {
+        message: "You cannot download the data yet as not all your participants have responded.",
+        route: "/mainmenu"
+      })
+
+    }
+
+  } else {
+
+    res.render("failure", {
+      message: "This page is blocked as you are not yet authenticated or not a researcher.",
+      route: "/signin"
     })
+
+  }
+
+})
+
+app.get("/writeToBlockchain", (req, res) => {
+
+  if ((currentUser) && (currentUser.occupation === "Researcher")) {
+
+
 
   } else {
 
@@ -371,7 +449,9 @@ app.post("/signup", (req, res) => {
             password: hashedPassword,
             occupation: userOccupation,
             fullName: userFullName,
-            researchers: []
+            researchers: [],
+            testSubjects: [],
+            allResponded: false
           });
 
           newUser.save()
@@ -473,11 +553,13 @@ app.post("/addTestSubject", async (req, res) => {
 
       for (let i = 0; i < testers.length; i++) {
         await User.findOneAndUpdate({email: testers[i]}, { $addToSet: { researchers: currentUser}})
+        await User.findOneAndUpdate({email: currentUser.email}, { $addToSet: { testSubjects: testers[i]}})
       }
 
     } else {
 
       await User.findOneAndUpdate({email: testers}, { $addToSet: { researchers: currentUser}})
+      await User.findOneAndUpdate({email: currentUser.email}, { $addToSet: { testSubjects: testers}})
 
     }
 
@@ -521,11 +603,24 @@ app.post("/submitResearchAnswers", async (req, res) => {
 
   try {
 
+    let firstQuestion = await ResearchData.findById(questionIds[0]);
+    const questionnaireOwnerEmail = firstQuestion.researcherEmail;
+    const numTestSubjects = await User.findOne({email: questionnaireOwnerEmail}).testSubjects.length;
+
     for (let i = 0; i < questionIds.length; i++) {
 
       const testerResponse = req.body[questionIds[i]]
 
       await ResearchData.findByIdAndUpdate(questionIds[i], { $push: { responses: testerResponse } })
+
+    }
+
+    firstQuestion = await ResearchData.findById(questionIds[0]);
+
+    if (firstQuestion.responses.length === numTestSubjects) {
+
+      await User.findOneAndUpdate({email: questionnaireOwnerEmail}, { allResponded: true })
+      console.log("All participants responded");
 
     }
 
