@@ -1,5 +1,5 @@
-const HelloWorld = artifacts.require ("./HelloWorld.sol");
+const ResearchProjects = artifacts.require ("./ResearchProjects.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(HelloWorld);
+  deployer.deploy(ResearchProjects);
 }
