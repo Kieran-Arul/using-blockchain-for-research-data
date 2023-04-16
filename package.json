@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "ganache": "ganache --wallet.seed 99"
   },
   "author": "Kieran Arul",
   "license": "ISC",
@@ -13,6 +14,10 @@
     "bcryptjs": "^2.4.3",
     "ejs": "^3.1.8",
     "express": "^4.18.1",
-    "mongoose": "^6.4.2"
+    "ganache": "^7.8.0",
+    "ganache-cli": "^6.12.2",
+    "mongoose": "^6.4.2",
+    "truffle": "^5.8.2",
+    "web3": "^1.9.0"
   }
 }
