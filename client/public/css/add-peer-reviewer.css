@@ -1,0 +1,69 @@
+html, body {
+    height: 100%;
+}
+
+body {
+
+    display: flex;
+    align-items: center;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    background-color: #f5f5f5;
+
+}
+
+.form-add-peer-reviewers {
+
+    width: 100%;
+    max-width: 330px;
+    padding: 15px;
+    margin: auto;
+
+}
+
+.form-add-peer-reviewers .checkbox {
+
+    font-weight: 400;
+
+}
+
+.form-add-peer-reviewers .form-control {
+
+    position: relative;
+    box-sizing: border-box;
+    height: auto;
+    padding: 10px;
+    font-size: 16px;
+
+}
+
+#peerReviewers {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#peerReviewers td, #peerReviewers th {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+#peerReviewers tr:nth-child(even){background-color: #f2f2f2;}
+
+#peerReviewers tr:hover {background-color: #ddd;}
+
+#peerReviewers th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #04AA6D;
+    color: white;
+}
+
+.form-add-peer-reviewers .form-control:focus {
+    z-index: 2;
+}
+
+.btn {
+    margin-top: 4%;
+}

@@ -93,39 +93,61 @@
 
                     <% if (occupation === "Researcher") { %>
 
-                        <div class="col-lg-3 rule-box">
+                        <div class="col-lg-2 rule-box">
                             <a href="/submitResearchQuestions"><i class="fas fa-briefcase fa-4x icon"></i></a>
                             <h3 class="rule-title">Submit Research Questions</h3>
                         </div>
 
-                        <div class="col-lg-3 rule-box">
+                        <div class="col-lg-2 rule-box">
                             <a href="/selectQuestion"><i class="fas fa-book fa-4x icon"></i></a>
-                            <h3 class="rule-title">View Question Responses</h3>
+                            <h3 class="rule-title">View Data</h3>
                         </div>
 
-                        <div class="col-lg-3 rule-box">
-                            <a href="/confirmDownload"><i class="fas fa-hashtag fa-4x icon"></i></a>
-                            <h3 class="rule-title">Download Response Data</h3>
+                        <!-- Check that all participants have agreed to share // -->
+                        <div class="col-lg-2 rule-box">
+                            <a href="/downloadData"><i class="fas fa-hashtag fa-4x icon"></i></a>
+                            <h3 class="rule-title">Share Data</h3>
                         </div>
 
-                        <div class="col-lg-3 rule-box">
+                        <div class="col-lg-2 rule-box">
                             <a href="/addTestSubject"><i class="fas fa-taxi fa-4x icon"></i></a>
-                            <h3 class="rule-title">Add Research Participant</h3>
+                            <h3 class="rule-title">Add Research Participants</h3>
+                        </div>
+
+                        <!-- Write endpoint for this // -->
+                        <div class="col-lg-2 rule-box">
+                            <a href="/addPeerReviewer"><i class="fas fa-taxi fa-4x icon"></i></a>
+                            <h3 class="rule-title">Add Peer Reviewers</h3>
+                        </div>
+
+                        <!-- Write endpoint for this // -->
+                        <div class="col-lg-2 rule-box">
+                            <a href="/viewHash"><i class="fas fa-taxi fa-4x icon"></i></a>
+                            <h3 class="rule-title">View Data Hash</h3>
                         </div>
 
                     <% } else if (occupation === "Test Subject") { %>
 
-                        <div class="col-lg-12 rule-box">
+                        <!-- Automatically hash data and send to blockchain when all answered // -->
+                        <div class="col-lg-6 rule-box">
                             <a href="/selectResearcher"><i class="fas fa-briefcase fa-4x icon"></i></a>
                             <h3 class="rule-title">Answer Research Questions</h3>
                         </div>
 
+                        <!-- Write endpoint for this // -->
+                        <div class="col-lg-6 rule-box">
+                            <a href="/setSharingPreference"><i class="fas fa-briefcase fa-4x icon"></i></a>
+                            <h3 class="rule-title">Set Data Sharing Preference</h3>
+                        </div>
+
                     <% } else if (occupation === "Peer Reviewer") { %>
 
+                        <!-- Write endpoint for this // -->
                         <div class="col-lg-12 rule-box ">
                             <a href="/verifyDataIntegrity"><i class="fas fa-hands-helping fa-4x icon"></i></a>
                             <h3 class="rule-title">Verify Data Integrity</h3>
                         </div>
+
                     <% } %>
 
                 </div>

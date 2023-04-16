@@ -4,6 +4,8 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
+const { researchIsSharable, addResearchParticipant, changeSharingPreference, addResearchHash, getResearchHash } = require("./blockchainInterface.js")
+
 const express = require("express");
 const app = express();
 
@@ -43,6 +45,10 @@ const userSchema = new mongoose.Schema({
     ref: "User"
   }],
   testSubjects: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  }],
+  reviewees: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
   }],
@@ -230,67 +236,13 @@ app.get("/selectQuestion", async (req, res) => {
 
 })
 
-app.get("/confirmDownload", (req, res) => {
+app.get("/downloadData", async (req, res) => {
 
   if ((currentUser) && (currentUser.occupation === "Researcher")) {
 
-    if (currentUser.allResponded) {
+    const allowedToShare = await researchIsSharable(currentUser._id);
 
-      ResearchData.find({ researcherEmail: currentUser.email }, (err, data) => {
-
-        if (err) {
-
-          console.log(err);
-
-          res.render("failure", {
-            message: "Something went wrong. Please try again.",
-            route: "/mainmenu"
-          })
-
-        } else if (data) {
-
-          const dataAsJson = JSON.stringify(data);
-
-          const hash = crypto.createHash("sha256").update(dataAsJson).digest("hex");
-
-          res.render("success", {
-            message: "Your research data has been hashed. The hash is: " + hash + ". Click proceed to download your data and write your hash to the blockchain.",
-            route: "/downloadData"
-          })
-
-        }
-
-      })
-
-    } else {
-
-      res.render("failure", {
-        message: "You cannot download the data yet as not all your participants have responded.",
-        route: "/mainmenu"
-      })
-
-    }
-
-  } else {
-
-    res.render("failure", {
-      message: "This page is blocked as you are not yet authenticated or not a researcher.",
-      route: "/signin"
-    })
-
-  }
-
-})
-
-async function writeToBlockchain(hash) {
-
-}
-
-app.get("/downloadData", (req, res) => {
-
-  if ((currentUser) && (currentUser.occupation === "Researcher")) {
-
-    if (currentUser.allResponded) {
+    if ((currentUser.allResponded) && (allowedToShare)) {
 
       ResearchData.find({researcherEmail: currentUser.email}, (err, data) => {
 
@@ -306,12 +258,6 @@ app.get("/downloadData", (req, res) => {
         } else if (data) {
 
           const dataAsJson = JSON.stringify(data);
-
-          const hash = crypto.createHash("sha256").update(dataAsJson).digest("hex");
-
-          writeToBlockchain(hash)
-              .then(r => console.log("Written to blockchain"))
-              .catch(e => console.log("Writing to blockchain failed"))
 
           fs.writeFile("output.json", dataAsJson, err => {
 
@@ -355,7 +301,7 @@ app.get("/downloadData", (req, res) => {
     } else {
 
       res.render("failure", {
-        message: "You cannot download the data yet as not all your participants have responded.",
+        message: "You cannot share the data either because not all participants have responded or some participants do not want their data shared.",
         route: "/mainmenu"
       })
 
@@ -372,6 +318,285 @@ app.get("/downloadData", (req, res) => {
 
 })
 
+app.get("/setSharingPreference", async (req, res) => {
+
+  if ((currentUser) && (currentUser.occupation === "Test Subject")) {
+
+    try {
+
+      const userWPopulatedResearchers = await currentUser.populate("researchers")
+
+      res.render("set-sharing-preference", {
+        researcherList: userWPopulatedResearchers.researchers
+      })
+
+    } catch (e) {
+
+      res.render("failure", {
+        message: "Something went wrong.",
+        route: "/mainmenu"
+      })
+
+    }
+
+  } else {
+
+    res.render("failure", {
+      message: "This page is blocked as you are not yet authenticated or not a test subject.",
+      route: "/signin"
+    })
+
+  }
+
+})
+
+app.post("/setSharingPreference", async (req, res) => {
+
+  try {
+
+    const researcherId = req.body.selectedResearcher;
+    const sharingPreference = req.body.sharingPreference === "true";
+
+    console.log(sharingPreference);
+
+    await changeSharingPreference(researcherId, currentUser._id, sharingPreference);
+
+    res.render("success", {
+      message: "Your preference has been saved to the blockchain.",
+      route: "/mainmenu"
+    })
+
+  } catch (e) {
+
+    res.render("failure", {
+      message: "Something went wrong. Please Try Again",
+      route: "/setSharingPreference"
+    })
+
+  }
+
+})
+
+app.get("/addPeerReviewer", (req, res) => {
+
+  if ((currentUser) && (currentUser.occupation === "Researcher")) {
+
+    User.find({ occupation: "Peer Reviewer" }, (err, theReviewers) => {
+
+      if (err) {
+
+        console.log(err);
+
+        res.render("failure", {
+          message: "Something went wrong.",
+          route: "/mainmenu"
+        })
+
+      } else {
+
+        res.render("add-peer-reviewer", {
+          reviewers: theReviewers
+        })
+
+      }
+
+    })
+
+  } else {
+
+    res.render("failure", {
+      message: "This page is blocked as you are not yet authenticated or not a researcher.",
+      route: "/signin"
+    })
+
+  }
+
+})
+
+app.post("/addPeerReviewer", async (req, res) => {
+
+  const peerReviewers = req.body.reviewers;
+
+  try {
+
+    if (Array.isArray(peerReviewers)) {
+
+      for (let i = 0; i < peerReviewers.length; i++) {
+
+        await User.findByIdAndUpdate(peerReviewers[i], { $addToSet: { reviewees: currentUser}})
+
+      }
+
+    } else {
+
+      await User.findByIdAndUpdate(peerReviewers, { $addToSet: { reviewees: currentUser}})
+
+    }
+
+    res.render("success", {
+      message: "Peer Reviewers successfully added.",
+      route: "/mainmenu"
+    })
+
+  } catch (e) {
+
+    console.log(e)
+    res.render("failure", {
+      message: "Error adding peer reviewers. Please try again.",
+      route: "/addPeerReviewer"
+    })
+
+  }
+
+})
+
+app.get("/viewHash", async (req, res) => {
+
+  if ((currentUser) && (currentUser.occupation === "Researcher") && (currentUser.allResponded)) {
+
+    try {
+
+      const storedHash = await getResearchHash(currentUser._id);
+
+      const researcherData = await ResearchData.find({ researcherEmail: currentUser.email });
+
+      const dataAsJson = JSON.stringify(researcherData);
+
+      const calculatedHash = crypto.createHash("sha256").update(dataAsJson).digest("hex");
+
+      if (storedHash === calculatedHash) {
+
+        res.render("success", {
+          message: "The stored hash is: " + storedHash + " and the calculated hash is: " + calculatedHash,
+          route: "/mainmenu"
+        })
+
+      } else {
+
+        res.render("failure", {
+          message: "The hashes do not match. The stored hash is: " + storedHash + " and the calculated hash is: " + calculatedHash,
+          route: "/mainmenu"
+        })
+
+      }
+
+    } catch (e) {
+
+      console.log(e);
+
+      res.render("failure", {
+        message: "Something went wrong.",
+        route: "/mainmenu"
+      })
+
+    }
+
+  } else {
+
+    res.render("failure", {
+      message: "You may not be authenticated. Your test subjects may not have all responded yet as well, thus the hash may not exist yet.",
+      route: "/mainmenu"
+    })
+
+  }
+
+})
+
+app.get("/verifyDataIntegrity", async (req, res) => {
+
+  if ((currentUser) && (currentUser.occupation === "Peer Reviewer")) {
+
+    try {
+
+      const userWPopulatedReviewees = await currentUser.populate("reviewees")
+
+      res.render("verify-data-integrity", {
+        researcherList: userWPopulatedReviewees.reviewees
+      })
+
+    } catch (e) {
+
+      res.render("failure", {
+        message: "Something went wrong.",
+        route: "/mainmenu"
+      })
+
+    }
+
+  } else {
+
+    res.render("failure", {
+      message: "This page is blocked as you are not yet authenticated or not a peer reviewer.",
+      route: "/signin"
+    })
+
+  }
+
+})
+
+app.post("/verifyDataIntegrity", async (req, res) => {
+
+  if ((currentUser) && (currentUser.occupation === "Peer Reviewer")) {
+
+    try {
+
+      const researcherId = req.body.selectedResearcher;
+      const researcherObject = await User.findById(researcherId);
+
+      if (!researcherObject.allResponded) {
+
+        res.render("failure", {
+          message: "Unable to view hash. Not all participants have responded to the researcher yet.",
+          route: "/mainmenu"
+        })
+
+      }
+
+      const researcherData = await ResearchData.find({ researcherEmail: researcherObject.email });
+
+      const dataAsJson = JSON.stringify(researcherData);
+
+      const calculatedHash = crypto.createHash("sha256").update(dataAsJson).digest("hex");
+
+      const storedHash = await getResearchHash(researcherId);
+
+      if (calculatedHash === storedHash) {
+
+        res.render("success", {
+          message: "The stored and calculated hashes match. The stored hash is: " + storedHash + " and the calculated hash is: " + calculatedHash,
+          route: "/mainmenu"
+        })
+
+      } else {
+
+        res.render("failure", {
+          message: "The hashes do not match. The stored hash is: " + storedHash + " and the calculated hash is: " + calculatedHash,
+          route: "/mainmenu"
+        })
+
+      }
+
+    } catch (e) {
+
+      console.log(e);
+
+      res.render("failure", {
+        message: "Something went wrong.",
+        route: "/mainmenu"
+      })
+
+    }
+
+  } else {
+
+    res.render("failure", {
+      message: "This page is blocked as you are not yet authenticated or not a peer reviewer.",
+      route: "/signin"
+    })
+
+  }
+
+})
 
 /*********** API POST ENDPOINTS ************/
 
@@ -487,6 +712,7 @@ app.post("/signup", (req, res) => {
             fullName: userFullName,
             researchers: [],
             testSubjects: [],
+            reviewees: [],
             allResponded: false
           });
 
@@ -596,6 +822,10 @@ app.post("/addTestSubject", async (req, res) => {
         let currentParticipant = await User.findOne({email: testers[i]})
 
         await User.findOneAndUpdate({email: currentUser.email}, { $addToSet: { testSubjects: currentParticipant}})
+
+        // Default false sharing preference
+        await addResearchParticipant(currentUser._id, currentParticipant._id);
+
       }
 
     } else {
@@ -605,6 +835,8 @@ app.post("/addTestSubject", async (req, res) => {
       let currentParticipant = await User.findOne({email: testers})
 
       await User.findOneAndUpdate({email: currentUser.email}, { $addToSet: { testSubjects: currentParticipant}})
+
+      await addResearchParticipant(currentUser._id, currentParticipant._id);
 
     }
 
@@ -652,7 +884,8 @@ app.post("/submitResearchAnswers", async (req, res) => {
     const questionnaireOwnerEmail = firstQuestion.researcherEmail;
     const questionnaireOwner = await User.findOne({email: questionnaireOwnerEmail});
     const numTestSubjects = questionnaireOwner.testSubjects.length;
-    console.log(numTestSubjects);
+
+    console.log("Number of test subjects: " + numTestSubjects);
 
     for (let i = 0; i < questionIds.length; i++) {
 
@@ -668,6 +901,14 @@ app.post("/submitResearchAnswers", async (req, res) => {
 
       await User.findOneAndUpdate({email: questionnaireOwnerEmail}, { allResponded: true })
       console.log("All participants responded");
+
+      const researchData = await ResearchData.find({ researcherEmail: questionnaireOwnerEmail });
+
+      const dataAsJson = JSON.stringify(researchData);
+
+      const hash = crypto.createHash("sha256").update(dataAsJson).digest("hex");
+
+      await addResearchHash(questionnaireOwner._id, hash);
 
     }
 
