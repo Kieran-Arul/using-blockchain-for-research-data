@@ -96,7 +96,9 @@ async function getResearchHash(surveyId) {
 //     console.log("Sharing Status 123: " + status123);
 //     console.log("Sharing Status 456: " + status456);
 //
+//     await changeSharingPreference("123", "aaa", true);
 //     await changeSharingPreference("123", "bbb", true);
+//     await changeSharingPreference("123", "ccc", true);
 //
 //     status123 = await researchIsSharable("123");
 //     console.log("Sharing Status 123: " + status123);

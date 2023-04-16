@@ -242,6 +242,8 @@ app.get("/downloadData", async (req, res) => {
 
     const allowedToShare = await researchIsSharable(currentUser._id);
 
+    console.log("This data can be shared: " + allowedToShare);
+
     if ((currentUser.allResponded) && (allowedToShare)) {
 
       ResearchData.find({researcherEmail: currentUser.email}, (err, data) => {
@@ -357,9 +359,9 @@ app.post("/setSharingPreference", async (req, res) => {
     const researcherId = req.body.selectedResearcher;
     const sharingPreference = req.body.sharingPreference === "true";
 
-    console.log(sharingPreference);
+    const researcherDocument = await User.findById(researcherId);
 
-    await changeSharingPreference(researcherId, currentUser._id, sharingPreference);
+    await changeSharingPreference(researcherDocument._id, currentUser._id, sharingPreference);
 
     res.render("success", {
       message: "Your preference has been saved to the blockchain.",
@@ -558,7 +560,7 @@ app.post("/verifyDataIntegrity", async (req, res) => {
 
       const calculatedHash = crypto.createHash("sha256").update(dataAsJson).digest("hex");
 
-      const storedHash = await getResearchHash(researcherId);
+      const storedHash = await getResearchHash(researcherObject._id);
 
       if (calculatedHash === storedHash) {
 
