@@ -68,45 +68,6 @@ async function getResearchHash(surveyId) {
 
 }
 
-// async function main() {
-//
-//     await addResearchHash("123", "0x333");
-//     await addResearchHash("456", "0x444");
-//     await addResearchHash("789", "0x555");
-//
-//     const hash1 = await getResearchHash("123");
-//     const hash2 = await getResearchHash("456");
-//     const hash3 = await getResearchHash("789");
-//
-//     console.log("Hash 1: " + hash1);
-//     console.log("Hash 2: " + hash2);
-//     console.log("Hash 3: " + hash3);
-//
-//     await addResearchParticipant("123", "aaa");
-//     await addResearchParticipant("123", "bbb");
-//     await addResearchParticipant("123", "ccc");
-//
-//     await addResearchParticipant("456", "ddd");
-//     await addResearchParticipant("456", "eee");
-//     await addResearchParticipant("456", "fff");
-//
-//     let status123 = await researchIsSharable("123");
-//     let status456 = await researchIsSharable("456");
-//
-//     console.log("Sharing Status 123: " + status123);
-//     console.log("Sharing Status 456: " + status456);
-//
-//     await changeSharingPreference("123", "aaa", true);
-//     await changeSharingPreference("123", "bbb", true);
-//     await changeSharingPreference("123", "ccc", true);
-//
-//     status123 = await researchIsSharable("123");
-//     console.log("Sharing Status 123: " + status123);
-//
-// }
-//
-// main().then(r => console.log("Completed"))
-
 module.exports = {
     researchIsSharable,
     addResearchParticipant,
