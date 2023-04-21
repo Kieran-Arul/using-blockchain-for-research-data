@@ -55,6 +55,10 @@ const userSchema = new mongoose.Schema({
   allResponded: {
     type: Boolean,
     default: false
+  },
+  hasShared: {
+    type: Boolean,
+    default: false
   }
 
 });
@@ -288,8 +292,14 @@ app.get("/downloadData", async (req, res) => {
                   console.log(err)
                 }
 
-                console.log("File deleted")
-
+                User.findByIdAndUpdate(currentUser._id, { hasShared: true })
+                    .then(() => {
+                      console.log("File deleted")
+                      console.log("Researcher share status updated")
+                    })
+                    .catch(err => {
+                      console.log(err);
+                    })
               })
 
             });
@@ -600,6 +610,97 @@ app.post("/verifyDataIntegrity", async (req, res) => {
 
 })
 
+app.get("/verifyDataPrivacy", async (req, res) => {
+
+  if ((currentUser) && (currentUser.occupation === "Peer Reviewer")) {
+
+    try {
+
+      const userWPopulatedReviewees = await currentUser.populate("reviewees")
+
+      res.render("verify-data-privacy", {
+        researcherList: userWPopulatedReviewees.reviewees
+      })
+
+    } catch (e) {
+
+      res.render("failure", {
+        message: "Something went wrong.",
+        route: "/mainmenu"
+      })
+
+    }
+
+  } else {
+
+    res.render("failure", {
+      message: "This page is blocked as you are not yet authenticated or not a peer reviewer.",
+      route: "/signin"
+    })
+
+  }
+
+})
+
+app.post("/verifyDataPrivacy", async (req, res) => {
+
+  if ((currentUser) && (currentUser.occupation === "Peer Reviewer")) {
+
+    try {
+
+      const researcherId = req.body.selectedResearcher;
+      const researcherObject = await User.findById(researcherId);
+
+      if (!researcherObject.allResponded) {
+
+        res.render("failure", {
+          message: "Unable to view hash. Not all participants have responded to the researcher yet.",
+          route: "/mainmenu"
+        })
+
+      }
+
+      const dataWasShared = researcherObject.hasShared;
+      const dataWasSharable = researchIsSharable(researcherObject._id);
+
+      if ((dataWasShared === dataWasSharable) || (dataWasSharable)) {
+
+        res.render("success", {
+          message: "Data privacy was respected",
+          route: "/mainmenu"
+        })
+
+      } else {
+
+        res.render("failure", {
+          message: "The data was shared but this was not authorized by the research participants",
+          route: "/mainmenu"
+        })
+
+      }
+
+    } catch (e) {
+
+      console.log(e);
+
+      res.render("failure", {
+        message: "Something went wrong.",
+        route: "/mainmenu"
+      })
+
+    }
+
+  } else {
+
+    res.render("failure", {
+      message: "This page is blocked as you are not yet authenticated or not a peer reviewer.",
+      route: "/signin"
+    })
+
+  }
+
+})
+
 /*********** API POST ENDPOINTS ************/
 
 app.post("/selectQuestion", async (req, res) => {
@@ -715,7 +816,8 @@ app.post("/signup", (req, res) => {
             researchers: [],
             testSubjects: [],
             reviewees: [],
-            allResponded: false
+            allResponded: false,
+            hasShared: false
           });
 
           newUser.save()
