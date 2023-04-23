@@ -244,6 +244,8 @@ app.get("/downloadData", async (req, res) => {
 
   if ((currentUser) && (currentUser.occupation === "Researcher")) {
 
+    console.time("Download Data")
+
     const allowedToShare = await researchIsSharable(currentUser._id);
 
     console.log("This data can be shared: " + allowedToShare);
@@ -296,6 +298,7 @@ app.get("/downloadData", async (req, res) => {
                     .then(() => {
                       console.log("File deleted")
                       console.log("Researcher share status updated")
+                      console.timeEnd("Download Data")
                     })
                     .catch(err => {
                       console.log(err);
@@ -362,33 +365,6 @@ app.get("/setSharingPreference", async (req, res) => {
 
 })
 
-app.post("/setSharingPreference", async (req, res) => {
-
-  try {
-
-    const researcherId = req.body.selectedResearcher;
-    const sharingPreference = req.body.sharingPreference === "true";
-
-    const researcherDocument = await User.findById(researcherId);
-
-    await changeSharingPreference(researcherDocument._id, currentUser._id, sharingPreference);
-
-    res.render("success", {
-      message: "Your preference has been saved to the blockchain.",
-      route: "/mainmenu"
-    })
-
-  } catch (e) {
-
-    res.render("failure", {
-      message: "Something went wrong. Please Try Again",
-      route: "/setSharingPreference"
-    })
-
-  }
-
-})
-
 app.get("/addPeerReviewer", (req, res) => {
 
   if ((currentUser) && (currentUser.occupation === "Researcher")) {
@@ -419,43 +395,6 @@ app.get("/addPeerReviewer", (req, res) => {
     res.render("failure", {
       message: "This page is blocked as you are not yet authenticated or not a researcher.",
       route: "/signin"
-    })
-
-  }
-
-})
-
-app.post("/addPeerReviewer", async (req, res) => {
-
-  const peerReviewers = req.body.reviewers;
-
-  try {
-
-    if (Array.isArray(peerReviewers)) {
-
-      for (let i = 0; i < peerReviewers.length; i++) {
-
-        await User.findByIdAndUpdate(peerReviewers[i], { $addToSet: { reviewees: currentUser}})
-
-      }
-
-    } else {
-
-      await User.findByIdAndUpdate(peerReviewers, { $addToSet: { reviewees: currentUser}})
-
-    }
-
-    res.render("success", {
-      message: "Peer Reviewers successfully added.",
-      route: "/mainmenu"
-    })
-
-  } catch (e) {
-
-    console.log(e)
-    res.render("failure", {
-      message: "Error adding peer reviewers. Please try again.",
-      route: "/addPeerReviewer"
     })
 
   }
@@ -546,6 +485,77 @@ app.get("/verifyDataIntegrity", async (req, res) => {
 
 })
 
+app.get("/verifyDataPrivacy", async (req, res) => {
+
+  if ((currentUser) && (currentUser.occupation === "Peer Reviewer")) {
+
+    try {
+
+      const userWPopulatedReviewees = await currentUser.populate("reviewees")
+
+      res.render("verify-data-privacy", {
+        researcherList: userWPopulatedReviewees.reviewees
+      })
+
+    } catch (e) {
+
+      res.render("failure", {
+        message: "Something went wrong.",
+        route: "/mainmenu"
+      })
+
+    }
+
+  } else {
+
+    res.render("failure", {
+      message: "This page is blocked as you are not yet authenticated or not a peer reviewer.",
+      route: "/signin"
+    })
+
+  }
+
+})
+
+/*********** API POST ENDPOINTS ************/
+
+app.post("/addPeerReviewer", async (req, res) => {
+
+  const peerReviewers = req.body.reviewers;
+
+  try {
+
+    if (Array.isArray(peerReviewers)) {
+
+      for (let i = 0; i < peerReviewers.length; i++) {
+
+        await User.findByIdAndUpdate(peerReviewers[i], { $addToSet: { reviewees: currentUser}})
+
+      }
+
+    } else {
+
+      await User.findByIdAndUpdate(peerReviewers, { $addToSet: { reviewees: currentUser}})
+
+    }
+
+    res.render("success", {
+      message: "Peer Reviewers successfully added.",
+      route: "/mainmenu"
+    })
+
+  } catch (e) {
+
+    console.log(e)
+    res.render("failure", {
+      message: "Error adding peer reviewers. Please try again.",
+      route: "/addPeerReviewer"
+    })
+
+  }
+
+})
+
 app.post("/verifyDataIntegrity", async (req, res) => {
 
   if ((currentUser) && (currentUser.occupation === "Peer Reviewer")) {
@@ -591,38 +601,6 @@ app.post("/verifyDataIntegrity", async (req, res) => {
     } catch (e) {
 
       console.log(e);
-
-      res.render("failure", {
-        message: "Something went wrong.",
-        route: "/mainmenu"
-      })
-
-    }
-
-  } else {
-
-    res.render("failure", {
-      message: "This page is blocked as you are not yet authenticated or not a peer reviewer.",
-      route: "/signin"
-    })
-
-  }
-
-})
-
-app.get("/verifyDataPrivacy", async (req, res) => {
-
-  if ((currentUser) && (currentUser.occupation === "Peer Reviewer")) {
-
-    try {
-
-      const userWPopulatedReviewees = await currentUser.populate("reviewees")
-
-      res.render("verify-data-privacy", {
-        researcherList: userWPopulatedReviewees.reviewees
-      })
-
-    } catch (e) {
 
       res.render("failure", {
         message: "Something went wrong.",
@@ -701,7 +679,32 @@ app.post("/verifyDataPrivacy", async (req, res) => {
 
 })
 
-/*********** API POST ENDPOINTS ************/
+app.post("/setSharingPreference", async (req, res) => {
+
+  try {
+
+    const researcherId = req.body.selectedResearcher;
+    const sharingPreference = req.body.sharingPreference === "true";
+
+    const researcherDocument = await User.findById(researcherId);
+
+    await changeSharingPreference(researcherDocument._id, currentUser._id, sharingPreference);
+
+    res.render("success", {
+      message: "Your preference has been saved to the blockchain.",
+      route: "/mainmenu"
+    })
+
+  } catch (e) {
+
+    res.render("failure", {
+      message: "Something went wrong. Please Try Again",
+      route: "/setSharingPreference"
+    })
+
+  }
+
+})
 
 app.post("/selectQuestion", async (req, res) => {
 
