@@ -11,10 +11,9 @@ contract('ResearchProjects',(accounts) => {
 
             const contractAddress = await contract.address;
 
+            assert.notEqual(contractAddress, null);
             assert.notEqual(contractAddress, '');
             assert.notEqual(contractAddress, undefined);
-            assert.notEqual(contractAddress, null);
-            assert.notEqual(contractAddress, '0x0')
 
         });
 

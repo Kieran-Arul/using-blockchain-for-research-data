@@ -20,8 +20,12 @@ async function addResearchParticipant(surveyId, userId) {
 
     try {
 
-        await researchProjectsContract.methods.addParticipant(surveyId, userId, false).send({ from: address, gas: gasLimit });
-        console.log("Participant added");
+        await researchProjectsContract.methods.addParticipant(surveyId, userId, false).send({ from: address, gas: gasLimit })
+            .on('receipt', receipt => {
+                console.log("Participant added");
+                console.log("Gas used to add research participant: " + receipt.gasUsed);
+            })
+
 
     } catch (e) {
         console.log(e);
@@ -33,8 +37,12 @@ async function changeSharingPreference(surveyId, userId, willShare) {
 
     try {
 
-        await researchProjectsContract.methods.setSharingPreference(surveyId, userId, willShare).send({ from: address, gas: gasLimit });
-        console.log("Preference changed");
+        await researchProjectsContract.methods.setSharingPreference(surveyId, userId, willShare).send({ from: address, gas: gasLimit })
+            .on('receipt', receipt => {
+                console.log("Data sharing reference changed");
+                console.log("Gas used to add change sharing preference: " + receipt.gasUsed)
+            })
+
 
     } catch (e) {
         console.log(e)
@@ -46,8 +54,11 @@ async function addResearchHash(surveyId, hash) {
 
     try {
 
-        await researchProjectsContract.methods.addHash(surveyId, hash).send({ from: address, gas: gasLimit });
-        console.log("Hash set");
+        await researchProjectsContract.methods.addHash(surveyId, hash).send({ from: address, gas: gasLimit })
+            .on('receipt', receipt => {
+                console.log("Hash set")
+                console.log("Gas used to set hash: " + receipt.gasUsed)
+            })
 
     } catch (e) {
         console.log(e)

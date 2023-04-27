@@ -558,6 +558,8 @@ app.post("/addPeerReviewer", async (req, res) => {
 
 app.post("/verifyDataIntegrity", async (req, res) => {
 
+  console.time("Verify Data Integrity");
+
   if ((currentUser) && (currentUser.occupation === "Peer Reviewer")) {
 
     try {
@@ -583,6 +585,8 @@ app.post("/verifyDataIntegrity", async (req, res) => {
       const storedHash = await getResearchHash(researcherObject._id);
 
       if (calculatedHash === storedHash) {
+
+        console.timeEnd("Verify Data Integrity");
 
         res.render("success", {
           message: "The stored and calculated hashes match. The stored hash is: " + storedHash + " and the calculated hash is: " + calculatedHash,
@@ -622,6 +626,8 @@ app.post("/verifyDataIntegrity", async (req, res) => {
 
 app.post("/verifyDataPrivacy", async (req, res) => {
 
+  console.time("Verify Data Privacy");
+
   if ((currentUser) && (currentUser.occupation === "Peer Reviewer")) {
 
     try {
@@ -642,6 +648,8 @@ app.post("/verifyDataPrivacy", async (req, res) => {
       const dataWasSharable = researchIsSharable(researcherObject._id);
 
       if ((dataWasShared === dataWasSharable) || (dataWasSharable)) {
+
+        console.timeEnd("Verify Data Privacy")
 
         res.render("success", {
           message: "Data privacy was respected",
@@ -683,12 +691,16 @@ app.post("/setSharingPreference", async (req, res) => {
 
   try {
 
+    console.time("Set Sharing Preference");
+
     const researcherId = req.body.selectedResearcher;
     const sharingPreference = req.body.sharingPreference === "true";
 
     const researcherDocument = await User.findById(researcherId);
 
     await changeSharingPreference(researcherDocument._id, currentUser._id, sharingPreference);
+
+    console.timeEnd("Set Sharing Preference")
 
     res.render("success", {
       message: "Your preference has been saved to the blockchain.",
@@ -983,6 +995,8 @@ app.post("/viewResearchQuestions", async (req, res) => {
 
 app.post("/submitResearchAnswers", async (req, res) => {
 
+  console.time("Add Hash");
+
   const questionIds = Object.keys(req.body);
 
   try {
@@ -1016,6 +1030,8 @@ app.post("/submitResearchAnswers", async (req, res) => {
       const hash = crypto.createHash("sha256").update(dataAsJson).digest("hex");
 
       await addResearchHash(questionnaireOwner._id, hash);
+
+      console.timeEnd("Add Hash");
 
     }
 
