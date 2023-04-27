@@ -995,8 +995,6 @@ app.post("/viewResearchQuestions", async (req, res) => {
 
 app.post("/submitResearchAnswers", async (req, res) => {
 
-  console.time("Add Hash");
-
   const questionIds = Object.keys(req.body);
 
   try {
@@ -1019,6 +1017,8 @@ app.post("/submitResearchAnswers", async (req, res) => {
     firstQuestion = await ResearchData.findById(questionIds[0]);
 
     if (firstQuestion.responses.length === numTestSubjects) {
+
+      console.time("Add Hash");
 
       await User.findOneAndUpdate({email: questionnaireOwnerEmail}, { allResponded: true })
       console.log("All participants responded");
