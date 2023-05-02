@@ -696,6 +696,8 @@ app.post("/setSharingPreference", async (req, res) => {
     const researcherId = req.body.selectedResearcher;
     const sharingPreference = req.body.sharingPreference === "true";
 
+    console.log("Sharing preference selected is: " + sharingPreference);
+
     const researcherDocument = await User.findById(researcherId);
 
     await changeSharingPreference(researcherDocument._id, currentUser._id, sharingPreference);
