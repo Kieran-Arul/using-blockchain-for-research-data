@@ -246,7 +246,7 @@ app.get("/downloadData", async (req, res) => {
 
     console.time("Download Data")
 
-    const allowedToShare = await researchIsSharable(currentUser._id);
+    const allowedToShare = await researchIsSharable(currentUser._id.toString());
 
     console.log("This data can be shared: " + allowedToShare);
 
@@ -407,7 +407,7 @@ app.get("/viewHash", async (req, res) => {
 
     try {
 
-      const storedHash = await getResearchHash(currentUser._id);
+      const storedHash = await getResearchHash(currentUser._id.toString());
 
       const researcherData = await ResearchData.find({ researcherEmail: currentUser.email });
 
@@ -582,7 +582,7 @@ app.post("/verifyDataIntegrity", async (req, res) => {
 
       const calculatedHash = crypto.createHash("sha256").update(dataAsJson).digest("hex");
 
-      const storedHash = await getResearchHash(researcherObject._id);
+      const storedHash = await getResearchHash(researcherObject._id.toString());
 
       if (calculatedHash === storedHash) {
 
@@ -645,7 +645,7 @@ app.post("/verifyDataPrivacy", async (req, res) => {
       }
 
       const dataWasShared = researcherObject.hasShared;
-      const dataWasSharable = researchIsSharable(researcherObject._id);
+      const dataWasSharable = researchIsSharable(researcherObject._id.toString());
 
       if ((dataWasShared === dataWasSharable) || (dataWasSharable)) {
 
@@ -700,7 +700,7 @@ app.post("/setSharingPreference", async (req, res) => {
 
     const researcherDocument = await User.findById(researcherId);
 
-    await changeSharingPreference(researcherDocument._id, currentUser._id, sharingPreference);
+    await changeSharingPreference(researcherDocument._id.toString(), currentUser._id.toString(), sharingPreference);
 
     console.timeEnd("Set Sharing Preference")
 
@@ -945,7 +945,7 @@ app.post("/addTestSubject", async (req, res) => {
         await User.findOneAndUpdate({email: currentUser.email}, { $addToSet: { testSubjects: currentParticipant}})
 
         // Default false sharing preference
-        await addResearchParticipant(currentUser._id, currentParticipant._id);
+        await addResearchParticipant(currentUser._id.toString(), currentParticipant._id.toString());
 
       }
 
@@ -957,7 +957,7 @@ app.post("/addTestSubject", async (req, res) => {
 
       await User.findOneAndUpdate({email: currentUser.email}, { $addToSet: { testSubjects: currentParticipant}})
 
-      await addResearchParticipant(currentUser._id, currentParticipant._id);
+      await addResearchParticipant(currentUser._id.toString(), currentParticipant._id.toString());
 
     }
 
@@ -1031,7 +1031,7 @@ app.post("/submitResearchAnswers", async (req, res) => {
 
       const hash = crypto.createHash("sha256").update(dataAsJson).digest("hex");
 
-      await addResearchHash(questionnaireOwner._id, hash);
+      await addResearchHash(questionnaireOwner._id.toString(), hash);
 
       console.timeEnd("Add Hash");
 
